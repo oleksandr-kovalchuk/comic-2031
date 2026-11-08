@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Мені 33. Один мій день у 2031 році: дім, сім'я, власний салон краси в Тернополі, учениці й час для себе.">
+<title>Мій день у 2031</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Onest:wght@400;500&family=Prata&display=swap">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+/* Layout: full-screen hero quote (opened like waking eyes), then the day: a sticky clock (time + 07:00–22:00 line with the sun)
+   beside a column of photos, an album of the whole day, and a full-screen night ending with shooting stars.
+   The page colour and the sky behind it follow the time of day: morning rays, golden-hour glints, night stars. */
+:root{
+  --bg:#E8D3D2; --ink:#3A2630; --muted:#6B525C; --sun:#F4B79C;
+  --line:color-mix(in srgb, var(--ink) 22%, transparent);
+  --gold:#E8B85A;
+  --f-display:"Prata",Georgia,"Times New Roman",serif;
+  --f-body:"Onest","Segoe UI",system-ui,sans-serif;
+  --f-hand:"Caveat","Segoe Print",cursive;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--ink);font:400 17px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.wrap{overflow-x:clip;padding-inline:max(20px,env(safe-area-inset-left,0px)) max(20px,env(safe-area-inset-right,0px))}
+
+/* waking eyes: two lids cover the screen on load and open with a blink */
+.lids{display:none}
+.js .lids{display:block;position:fixed;inset:0;z-index:50;pointer-events:none}
+.lid{position:absolute;left:-15%;right:-15%;height:62%;background:#1B1219}
+.lid.top{top:0;border-radius:0 0 50% 50% / 0 0 30% 30%}
+.lid.bottom{bottom:0;border-radius:50% 50% 0 0 / 30% 30% 0 0}
+
+/* sky behind everything */
+.sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.rays{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transform-origin:100% 0;
+  background:conic-gradient(from 190deg at 100% 0%,
+    transparent 0deg 8deg, rgb(255 249 238 / .75) 12deg, transparent 16deg 27deg,
+    rgb(255 249 238 / .55) 30deg, transparent 33deg 45deg,
+    rgb(255 249 238 / .65) 49deg, transparent 54deg 61deg,
+    rgb(255 249 238 / .45) 64deg, transparent 67deg 360deg);
+  -webkit-mask-image:radial-gradient(circle at 100% 0,#000 0,transparent 80%);mask-image:radial-gradient(circle at 100% 0,#000 0,transparent 80%);
+  filter:blur(6px)}
+.wish{position:fixed;left:0;top:0;z-index:40;margin:0;pointer-events:none;opacity:0;white-space:nowrap;
+  font:500 30px/1 var(--f-hand);color:#FFF3D6;text-shadow:0 0 14px rgb(255 214 140 / .85)}
+
+/* hero */
+.hero{position:relative;isolation:isolate;max-width:1120px;margin-inline:auto;min-height:100svh;display:grid;align-content:end;padding-block:14svh 12svh}
+.sunrise{position:absolute;z-index:-1;right:-12%;top:6svh;width:min(78vw,560px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#FFE6CC 0%,#F7BFA4 42%,rgb(247 191 164 / 0) 70%);pointer-events:none}
+.hero h1{font:400 clamp(76px,19vw,208px)/.88 var(--f-display);letter-spacing:-.025em;margin:0}
+.dream{font:400 clamp(24px,4.4vw,40px)/1.25 var(--f-display);max-width:17em;margin:28px 0 0;text-wrap:balance}
+.note{color:var(--muted);max-width:30em;margin:20px 0 0}
+
+/* the day */
+.day{position:relative;max-width:1120px;margin-inline:auto}
+.clock{display:none}
+.js .clock{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:18px;position:sticky;top:0;z-index:5;
+  margin-inline:-20px;padding:8px 20px 10px;background:var(--bg);border-bottom:1px solid var(--line)}
+.time{overflow:hidden;font:400 30px/1.4 var(--f-display);font-variant-numeric:lining-nums tabular-nums;min-width:3.1em}
+.time span{display:inline-block}
+.dayline{position:relative;height:14px}
+.dayline::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
+.tick{position:absolute;top:50%;width:1px;height:7px;transform:translate(-50%,-50%);background:var(--line)}
+.sun{position:absolute;top:50%;left:0;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);
+  background:var(--sun);box-shadow:0 0 0 4px color-mix(in srgb,var(--sun) 30%,transparent),0 0 18px 4px color-mix(in srgb,var(--sun) 55%,transparent)}
+.ends{display:none}
+
+.scenes{display:grid;gap:clamp(96px,16svh,180px);padding-block:40px 0}
+.scene{scroll-margin-top:90px}
+.photo{position:relative;overflow:hidden;border-radius:3px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.photo img{display:block;width:100%;height:auto}
+.glare{position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);mix-blend-mode:screen;
+  background:linear-gradient(105deg,transparent 32%,rgb(255 248 232 / .38) 50%,transparent 68%)}
+.shine{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;mix-blend-mode:soft-light;
+  background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgb(255 255 255 / .7),transparent 55%)}
+.frame{position:relative}
+.mapping{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 2px rgb(255 214 140 / .9))}
+.mapping .draw{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1}
+.mapping .map{stroke-width:1.1;stroke-dasharray:1}
+.mapping .dot{fill:#FFF3D6;stroke:var(--gold);stroke-width:1.2;opacity:0}
+.mapping text{font:500 11px var(--f-body);fill:#7A4E12;opacity:0}
+.scene h2{font:400 clamp(26px,3vw,32px)/1.2 var(--f-display);margin:26px 0 10px;text-wrap:balance}
+.scene p{margin:0;max-width:33em;text-wrap:pretty}
+
+/* album of the whole day: polaroids that fly together; each one leads back to its moment */
+.album-wrap{display:none}
+.js .album-wrap{display:block}
+.album-title{font:400 clamp(32px,5vw,44px)/1.15 var(--f-display);margin:0 0 28px}
+.album{position:relative;aspect-ratio:100/201}
+.polaroid{position:absolute;width:36%;padding:8px 8px 0;background:#FFFDF8;border-radius:2px;color:#3A2630;text-decoration:none;
+  box-shadow:0 14px 34px rgb(10 4 8 / .45),0 2px 6px rgb(10 4 8 / .3)}
+.polaroid img{display:block;width:100%;height:auto}
+.polaroid span{display:block;text-align:center;font:500 clamp(18px,4.6vw,26px)/1 var(--f-hand);padding:6px 0 9px}
+.polaroid:focus-visible{outline:2px solid #FFF3D6;outline-offset:3px}
+
+/* the last screen fills the whole viewport, so nothing from the day is visible above it */
+.finale{min-height:100svh;display:grid;align-content:center;justify-items:start;padding-block:12svh}
+.finale h2{font-size:clamp(56px,12vw,112px);line-height:.95;letter-spacing:-.02em;margin:0 0 24px}
+.finale .q{font:400 clamp(24px,3.4vw,32px)/1.3 var(--f-display);margin:56px 0 24px;max-width:16em;text-wrap:balance}
+.again{font:500 16px/1 var(--f-body);color:var(--bg);background:var(--ink);border:0;border-radius:999px;padding:14px 22px;cursor:pointer}
+.again:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.finale .tip{display:none;color:var(--muted);font-size:15px;margin-top:22px}
+.js .finale .tip{display:block}
+
+@media (min-width:960px){
+  body{font-size:18px}
+  .day{display:grid;grid-template-columns:minmax(0,1fr) 520px;column-gap:clamp(48px,7vw,104px);align-items:start}
+  .js .clock{display:block;position:sticky;top:16svh;margin:0;padding:40px 0 0;border:0;background:none}
+  .time{font-size:clamp(96px,10.5vw,152px);line-height:1.15;letter-spacing:-.02em}
+  .dayline{margin-top:30px;max-width:440px}
+  .ends{display:flex;justify-content:space-between;max-width:440px;margin-top:10px;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+  .scenes{grid-column:2;padding-top:12svh}
+  .scene{scroll-margin-top:12svh}
+}
+@media (prefers-reduced-motion: reduce){
+  .js .lids,.js .finale .tip{display:none}
+}
+</style>
+</head>
+<body>
+<div class="lids" id="lids" aria-hidden="true"><i class="lid top"></i><i class="lid bottom"></i></div>
+<canvas class="sky" id="sky" aria-hidden="true"></canvas>
+<div class="rays" id="rays" aria-hidden="true"></div>
+<p class="wish" id="wish" aria-hidden="true">Загадай бажання</p>
+
+<main class="wrap">
+
+  <header class="hero">
+    <div class="sunrise" aria-hidden="true"></div>
+    <h1>Мені 33.</h1>
+    <p class="dream">Я живу життям, яке колись було моєю мрією.</p>
+    <p class="note">Ось один мій день у 2031 році. Гортайте вниз, щоб прожити його разом зі мною.</p>
+  </header>
+
+  <section class="day" aria-label="Мій день">
+    <div class="clock" aria-hidden="true">
+      <div class="time"><span id="time">07:00</span></div>
+      <div>
+        <div class="dayline" id="dayline"><span class="sun" id="sun"></span></div>
+        <div class="ends"><span>07:00</span><span>22:00</span></div>
+      </div>
+    </div>
+
+    <div class="scenes">
+      <article class="scene" data-time="07:00">
+        <div class="photo"><img src="assets/scene-01.webp" width="928" height="1152" alt="Ранок у світлій спальні: я потягуюся в ліжку, поруч усміхається чоловік." fetchpriority="high"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">07:00. </span>Прокидаюся у своєму домі</h2>
+        <p>Простора світла спальня нашого власного будинку, великі вікна й ранкове сонце. Поруч чоловік, у сусідній кімнаті спить наша донька. Ми створили саме той дім, про який мріяли.</p>
+      </article>
+
+      <article class="scene" data-time="07:30">
+        <div class="photo"><img src="assets/scene-02.webp" width="928" height="1152" alt="Наношу сироватку за туалетним столиком у світлій ванній." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">07:30. </span>Мій час для себе</h2>
+        <p>Повільна б'юті-рутина: догляд за обличчям, укладка, легкий макіяж. Почуваюся здоровою, жіночною та впевненою. Я навчилася не відкладати турботу про себе на потім.</p>
+      </article>
+
+      <article class="scene" data-time="08:00">
+        <div class="photo"><img src="assets/scene-03.webp" width="928" height="1152" alt="Разом із чоловіком готуємо сніданок, донька сміється за кухонним островом." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">08:00. </span>Сімейний сніданок</h2>
+        <p>Разом із чоловіком готуємо сніданок, п'ємо каву, збираємо доньку в садочок. Ми не поспішаємо в хаосі, а насолоджуємося ранком. У нас є час одне для одного.</p>
+      </article>
+
+      <article class="scene" data-time="08:30">
+        <div class="photo"><img src="assets/scene-04.webp" width="928" height="1152" alt="Гуляю з Емочкою, маленькою чорною собачкою, зеленим двором біля будинку." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">08:30. </span>Ранкова прогулянка з Емочкою</h2>
+        <p>Зелений двір, свіже повітря, спокій. Я починаю день без постійного поспіху та телефонних дзвінків.</p>
+      </article>
+
+      <article class="scene" data-time="09:00">
+        <div class="photo"><img src="assets/scene-05.webp" width="928" height="1152" alt="Виходжу з білого позашляховика біля свого салону на старій вулиці Тернополя." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">09:00. </span>Дорога до власної справи</h2>
+        <p>Сідаю за кермо свого білого позашляховика й їду у власний beauty-простір у Тернополі. Невеликий, але дуже стильний салон, де все створено за моїм смаком і баченням.</p>
+      </article>
+
+      <article class="scene" data-time="10:00">
+        <div class="photo" id="mapPhoto">
+          <div class="frame" id="mapFrame">
+            <img src="assets/scene-06.webp" width="928" height="1152" alt="Пояснюю ученицям архітектуру брів і колористику біля великого екрана." loading="lazy" decoding="async">
+            <!-- brow mapping drawn over the brow on the screen; coordinates are in the photo's pixels -->
+            <svg class="mapping" id="mapping" viewBox="0 0 928 1152" aria-hidden="true">
+              <path class="draw brow" pathLength="1" d="M789 482 C812 446 838 384 868 372 C890 366 912 392 926 428"/>
+              <path class="draw brow" pathLength="1" d="M789 482 C818 448 843 402 868 398 C889 396 910 410 926 428"/>
+              <path class="draw map" pathLength="1" d="M789 600 L789 452"/>
+              <path class="draw map" pathLength="1" d="M789 600 L875 352"/>
+              <path class="draw map" pathLength="1" d="M789 600 L936 416"/>
+              <circle class="dot" cx="789" cy="482" r="4"/>
+              <circle class="dot" cx="868" cy="372" r="4"/>
+              <circle class="dot" cx="926" cy="428" r="4"/>
+              <text x="783" y="500" text-anchor="end">початок</text>
+              <text x="860" y="360" text-anchor="end">злам</text>
+              <text x="921" y="452" text-anchor="end">кінчик</text>
+            </svg>
+          </div>
+        </div>
+        <h2><span class="sr">10:00. </span>Я не просто майстер, я наставниця</h2>
+        <p>Теоретичний день навчання з брів: колористика, температури відтінків, архітектура, робота з різними типами зовнішності. Я бачу прогрес учениць і пишаюся, що допомагаю іншим майстрам розвиватися та заробляти більше.</p>
+      </article>
+
+      <article class="scene" data-time="12:00">
+        <div class="photo"><img src="assets/scene-07.webp" width="928" height="1152" alt="Обідаю з трьома подругами в ресторані, повному зелені." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">12:00. </span>Обід із подружками</h2>
+        <p>Смачно обідаємо, п'ємо каву, ділимося новинами, планами й подорожами. У нас є час на дружбу й відпочинок, а не лише на роботу та побут.</p>
+      </article>
+
+      <article class="scene" data-time="13:30">
+        <div class="photo"><img src="assets/scene-08.webp" width="928" height="1152" alt="Постійна клієнтка сміється з дзеркальцем у руці, я стою поруч зі щіточкою для брів." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">13:30. </span>Розвиток мого beauty-бізнесу</h2>
+        <p>Приймаю постійну клієнтку, з якою працюю вже багато років. Потім співбесіда з новим майстром макіяжу: я обираю людей не лише за навичками, а й за цінностями.</p>
+      </article>
+
+      <article class="scene" data-time="15:00">
+        <div class="photo"><img src="assets/scene-09.webp" width="928" height="1152" alt="Масаж у спа: я лежу на столі, розслаблена, довкола свічки й евкаліпт." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">15:00. </span>Інвестиція в себе</h2>
+        <p>Масаж. Це мій запланований час для відновлення, а не те, що я роблю, коли вже немає сил. Я регулярно займаюся спортом, стежу за здоров'ям і маю достатньо часу на себе.</p>
+      </article>
+
+      <article class="scene" data-time="16:30">
+        <div class="photo"><img src="assets/scene-10.webp" width="928" height="1152" alt="Обіймаю доньку на березі озера, поруч плавають качки, золоте вечірнє світло." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">16:30. </span>Час бути мамою</h2>
+        <p>Забираю доньку із садочка, і дорогою додому ми заїжджаємо до озера: гуляємо, годуємо качечок, фотографуємося. Я не хочу пропустити її дитинство через постійну зайнятість.</p>
+      </article>
+
+      <article class="scene" data-time="18:00">
+        <div class="photo"><img src="assets/scene-11.webp" width="928" height="1152" alt="Записую відеорозбір робіт учениць за ноутбуком, поруч кільцева лампа й мікрофон." loading="lazy" decoding="async"><span class="glare" aria-hidden="true"></span></div>
+        <h2><span class="sr">18:00. </span>Моя онлайн-імперія</h2>
+        <p>Заходжу у свою онлайн-спільноту для beauty-майстрів: переглядаю роботи учениць, записую відеорозбори. Мій онлайн-продукт приносить стабільний дохід і допомагає дівчатам з різних міст і країн.</p>
+      </article>
+
+      <article class="scene" data-time="19:00">
+        <div class="photo"><img src="assets/scene-12.webp" width="928" height="1152" alt="Вечір удома: ми з чоловіком на дивані, донька сміється в тата на колінах, Емочка лежить біля ніг." loading="lazy" decoding="async"></div>
+        <h2><span class="sr">19:00. </span>Життя, заради якого все це</h2>
+        <p>Увечері гуляємо всією сім'єю, разом готуємо вечерю, граємося з донькою, говоримо з чоловіком. Після вечірніх справ у мене є час на себе, затишок і спокій.</p>
+      </article>
+
+      <section class="album-wrap" aria-labelledby="albumTitle">
+        <h2 class="album-title" id="albumTitle">Увесь мій день</h2>
+        <div class="album" id="album"></div>
+      </section>
+
+      <article class="scene finale" data-time="22:00">
+        <h2><span class="sr">22:00. </span>Добраніч.</h2>
+        <p>Лягаю спати поруч із коханою людиною, знаючи, що ми здорові, щасливі та маємо одне одного.</p>
+        <p class="q">А ким ти бачиш себе через 5 років?</p>
+        <button type="button" class="again" id="again">Прожити день ще раз</button>
+        <p class="tip">Торкнися нічного неба й загадай бажання.</p>
+      </article>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+<script>
+(() => {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const again = document.getElementById('again');
+
+  if (!window.gsap || !window.ScrollTrigger) {
+    document.documentElement.classList.remove('js');
+    again.addEventListener('click', () => window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }));
+    return;
+  }
+  gsap.registerPlugin(ScrollTrigger);
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  /* ---------- the day: colours, sky and clock follow the scene in view ---------- */
+  const DAY = { ink: '#3A2630', muted: '#6B525C' };
+  const NIGHT = { ink: '#F4E5DE', muted: '#CDB6BC' };
+  // index 0 is the hero (before 07:00); rays = morning light, dust = golden-hour glints, stars = night sky
+  const PALETTE = [
+    { bg: '#E8D3D2', sun: '#F4B79C', rays: 0,   dust: 0,   stars: 0,   ...DAY },
+    { bg: '#F5E2DA', sun: '#F6B48E', rays: 1,   dust: 0,   stars: 0,   ...DAY },   // 07:00
+    { bg: '#F7E8E3', sun: '#F8C3A0', rays: .9,  dust: 0,   stars: 0,   ...DAY },   // 07:30
+    { bg: '#F9EEE5', sun: '#FAD3A6', rays: .8,  dust: 0,   stars: 0,   ...DAY },   // 08:00
+    { bg: '#ECEEE1', sun: '#F9D9A4', rays: .7,  dust: 0,   stars: 0,   ...DAY },   // 08:30 green yard
+    { bg: '#F4EDE6', sun: '#FCE1B0', rays: .45, dust: 0,   stars: 0,   ...DAY },   // 09:00
+    { bg: '#F6F1EE', sun: '#FFE7BC', rays: .2,  dust: 0,   stars: 0,   ...DAY },   // 10:00
+    { bg: '#F7EEEA', sun: '#FFEDC6', rays: 0,   dust: 0,   stars: 0,   ...DAY },   // 12:00
+    { bg: '#F6E5E5', sun: '#FFE3B8', rays: 0,   dust: 0,   stars: 0,   ...DAY },   // 13:30 salon pink
+    { bg: '#EFE5DE', sun: '#FDD6A2', rays: 0,   dust: .35, stars: 0,   ...DAY },   // 15:00 spa
+    { bg: '#F2D6B4', sun: '#F5A865', rays: 0,   dust: 1,   stars: 0,   ...DAY },   // 16:30 golden hour
+    { bg: '#E5C6B6', sun: '#EC9467', rays: 0,   dust: .8,  stars: 0,   ...DAY },   // 18:00 sunset
+    { bg: '#43303D', sun: '#E48A72', rays: 0,   dust: .15, stars: .55, ...NIGHT }, // 19:00 dusk
+    { bg: '#241B25', sun: '#EDE6D6', rays: 0,   dust: 0,   stars: 1,   ink: '#EFE1DB', muted: '#BBA6AD' } // 22:00, the sun becomes the moon
+  ];
+
+  const root = document.documentElement;
+  const timeEl = document.getElementById('time');
+  const sun = document.getElementById('sun');
+  const rays = document.getElementById('rays');
+  const line = document.getElementById('dayline');
+  const scenes = gsap.utils.toArray('.scene');
+  const finaleIndex = scenes.length - 1;
+  const toPct = t => { const [h, m] = t.split(':').map(Number); return ((h + m / 60 - 7) / 15) * 100; };
+
+  scenes.forEach(s => {
+    s.id = 't' + s.dataset.time.replace(':', '');
+    const tick = document.createElement('span');
+    tick.className = 'tick';
+    tick.style.left = toPct(s.dataset.time) + '%';
+    line.prepend(tick);
+  });
+
+  /* sky canvas: golden glints drifting up, stars appearing one by one, shooting stars at night */
+  const canvas = document.getElementById('sky');
+  const ctx = canvas.getContext('2d');
+  const skyState = { dust: 0, stars: 0 };
+  const stars = Array.from({ length: 150 }, () => ({ x: Math.random(), y: Math.random(), r: rnd(.4, 1.5), t: Math.random(), ph: rnd(0, 6.3), sp: rnd(.6, 2) }));
+  const motes = Array.from({ length: 48 }, () => ({ x: Math.random(), y: Math.random(), r: rnd(.8, 2.4), vx: rnd(-.006, .006), vy: rnd(-.022, -.008), ph: rnd(0, 6.3) }));
+  const shooters = [];
+  let W = 0, H = 0, raf = 0, last = 0, nextShoot = 0;
+  const addShooter = (x, y) => {
+    const ang = rnd(2.45, 2.75), speed = rnd(700, 1000);   // towards the lower left
+    shooters.push({ x, y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, age: 0, dur: rnd(.7, 1.05), tail: rnd(120, 190) });
+  };
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawSky(performance.now(), 0);
+  };
+  function drawSky(now, dt) {
+    const t = now / 1000;
+    ctx.clearRect(0, 0, W, H);
+    if (skyState.stars > .01) {
+      ctx.fillStyle = '#FFF6E8';
+      for (const s of stars) {
+        const on = Math.min(1, Math.max(0, (skyState.stars - s.t * .7) / .3));
+        const a = on * (reduce ? .8 : .55 + .45 * Math.sin(t * s.sp + s.ph));
+        if (a < .02) continue;
+        ctx.globalAlpha = a;
+        ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, 6.283); ctx.fill();
+      }
+    }
+    if (skyState.dust > .01) {
+      for (const m of motes) {
+        if (dt) {
+          m.x += (m.vx + Math.sin(t * .7 + m.ph) * .004) * dt; m.y += m.vy * dt;
+          if (m.y < -.05) { m.y = 1.05; m.x = Math.random(); }
+          if (m.x < -.05) m.x = 1.05; else if (m.x > 1.05) m.x = -.05;
+        }
+        const a = skyState.dust * (reduce ? .6 : .35 + .3 * (1 + Math.sin(t * 1.4 + m.ph)));
+        const x = m.x * W, y = m.y * H;
+        ctx.globalAlpha = a * .25; ctx.fillStyle = '#FFE7B0';
+        ctx.beginPath(); ctx.arc(x, y, m.r * 3.2, 0, 6.283); ctx.fill();
+        ctx.globalAlpha = a; ctx.fillStyle = '#FFFBEF';
+        ctx.beginPath(); ctx.arc(x, y, m.r, 0, 6.283); ctx.fill();
+      }
+    }
+    for (let k = shooters.length - 1; k >= 0; k--) {
+      const s = shooters[k];
+      s.age += dt;
+      const p = s.age / s.dur;
+      if (p >= 1) { shooters.splice(k, 1); continue; }
+      s.x += s.vx * dt; s.y += s.vy * dt;
+      const a = Math.sin(Math.PI * p);
+      const n = Math.hypot(s.vx, s.vy), len = s.tail * (.4 + .6 * a);
+      const tx = s.x - s.vx / n * len, ty = s.y - s.vy / n * len;
+      const g = ctx.createLinearGradient(s.x, s.y, tx, ty);
+      g.addColorStop(0, `rgba(255,248,232,${a})`); g.addColorStop(1, 'rgba(255,248,232,0)');
+      ctx.globalAlpha = 1; ctx.strokeStyle = g; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.globalAlpha = a; ctx.fillStyle = '#FFFBEF';
+      ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  const loop = now => {
+    const dt = last ? Math.min((now - last) / 1000, .1) : 0;
+    last = now;
+    if (skyState.stars > .9) {                       // full night: a shooting star every few seconds
+      if (!nextShoot) nextShoot = now + 1500;
+      else if (now > nextShoot) { addShooter(rnd(.35, 1) * W, rnd(0, .35) * H); nextShoot = now + rnd(3500, 7000); }
+    } else nextShoot = 0;
+    drawSky(now, dt);
+    raf = (skyState.dust > .01 || skyState.stars > .01 || shooters.length) ? requestAnimationFrame(loop) : 0;
+  };
+  const wakeSky = () => {
+    if (reduce) { drawSky(performance.now(), 0); return; }
+    if (!raf) { last = 0; raf = requestAnimationFrame(loop); }
+  };
+  addEventListener('resize', resize);
+  resize();
+
+  let current = null;
+  const show = i => {           // i = -1 for the hero, otherwise the scene index
+    if (i === current) return;
+    current = i;
+    const pal = PALETTE[i + 1];
+    const time = i < 0 ? '07:00' : scenes[i].dataset.time;
+    const dur = reduce ? 0 : 1.1;
+    gsap.to(root, { '--bg': pal.bg, '--ink': pal.ink, '--muted': pal.muted, '--sun': pal.sun,
+      duration: dur, ease: 'power1.inOut', overwrite: 'auto' });
+    gsap.to(sun, { left: toPct(time) + '%', duration: dur, ease: 'power2.inOut', overwrite: 'auto' });
+    gsap.to(rays, { opacity: pal.rays, duration: dur * 1.6, ease: 'sine.inOut', overwrite: 'auto' });
+    gsap.to(skyState, { dust: pal.dust, stars: pal.stars, duration: reduce ? 0 : 2.4, ease: 'sine.inOut', overwrite: 'auto',
+      onStart: wakeSky, onComplete: wakeSky });
+    wakeSky();
+    if (timeEl.textContent === time) return;
+    if (reduce) { timeEl.textContent = time; return; }
+    gsap.killTweensOf(timeEl);
+    gsap.to(timeEl, { yPercent: -100, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete() {
+      timeEl.textContent = time;
+      gsap.fromTo(timeEl, { yPercent: 100, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.45, ease: 'power3.out' });
+    } });
+  };
+
+  scenes.forEach((s, i) => ScrollTrigger.create({
+    trigger: s, start: 'top 55%', end: 'bottom 55%',
+    onToggle: self => { if (self.isActive) show(i); },
+    onLeaveBack: () => { if (i === 0) show(-1); }
+  }));
+
+  /* ---------- wishes: tap the night sky on the last screen ---------- */
+  const wish = document.getElementById('wish');
+  addEventListener('pointerdown', e => {
+    if (reduce || current !== finaleIndex || e.target.closest('button, a')) return;
+    addShooter(e.clientX, e.clientY);
+    wakeSky();
+    const x = Math.min(Math.max(e.clientX, 110), innerWidth - 110);
+    gsap.killTweensOf(wish);
+    gsap.timeline()
+      .set(wish, { x, y: e.clientY - 34, xPercent: -50, yPercent: -50 })
+      .fromTo(wish, { opacity: 0, y: e.clientY - 20 }, { opacity: 1, y: e.clientY - 34, duration: .5, ease: 'power2.out' })
+      .to(wish, { opacity: 0, y: e.clientY - 50, duration: .8, ease: 'power2.in' }, '+=1.2');
+  });
+
+  /* ---------- album of the whole day ---------- */
+  const album = document.getElementById('album');
+  const cols = [2, 32, 62];
+  const photoScenes = scenes.filter(s => s.querySelector('.photo img'));
+  photoScenes.forEach((s, i) => {
+    const a = document.createElement('a');
+    a.className = 'polaroid';
+    a.href = '#' + s.id;
+    a.setAttribute('aria-label', s.dataset.time + ', ' + s.querySelector('h2').textContent.replace(/^\d\d:\d\d\.\s*/, ''));
+    a.innerHTML = `<img src="${s.querySelector('.photo img').getAttribute('src')}" width="928" height="1152" alt="" loading="lazy" decoding="async"><span>${s.dataset.time}</span>`;
+    const row = Math.floor(i / 3), col = i % 3;
+    // rows are spaced by one polaroid height so every handwritten time stays visible
+    gsap.set(a, { left: cols[col] + rnd(-2, 2) + '%', top: 1 + row * 24.4 + rnd(-.6, .6) + '%',
+      rotation: rnd(2, 5) * (Math.random() < .5 ? -1 : 1), zIndex: i + 1 });
+    a.addEventListener('click', e => { e.preventDefault(); s.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
+    album.append(a);
+  });
+
+  /* ---------- waking up and falling asleep ---------- */
+  const lids = document.getElementById('lids');
+  const [lidTop, lidBottom] = lids.children;
+  const heroIntro = () => {
+    gsap.fromTo('.sunrise', { yPercent: 55, opacity: 0, scale: .85 }, { yPercent: 0, opacity: 1, scale: 1, duration: 2.4, ease: 'power2.out' });
+    gsap.fromTo('.hero > :not(.sunrise)', { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power2.out', stagger: .15, delay: .2 });
+  };
+  const wake = () => gsap.timeline({ onComplete: () => { lids.style.display = 'none'; gsap.set('.hero', { clearProps: 'filter' }); } })
+    .call(() => { lids.style.display = 'block'; })
+    .set([lidTop, lidBottom], { yPercent: 0 })
+    .fromTo('.hero', { filter: 'blur(10px)' }, { filter: 'blur(0px)', duration: 2.2, ease: 'power2.out' }, .3)
+    .to(lidTop, { yPercent: -36, duration: .55, ease: 'power2.out' }, .35)
+    .to(lidBottom, { yPercent: 36, duration: .55, ease: 'power2.out' }, '<')
+    .to([lidTop, lidBottom], { yPercent: 0, duration: .16, ease: 'power2.in' }, '+=.2')
+    .to(lidTop, { yPercent: -101, duration: 1.1, ease: 'power3.inOut' }, '+=.08')
+    .to(lidBottom, { yPercent: 101, duration: 1.1, ease: 'power3.inOut' }, '<')
+    .call(heroIntro, null, '<+.15');
+  const sleep = () => gsap.timeline()
+    .call(() => { lids.style.display = 'block'; })
+    .fromTo(lidTop, { yPercent: -101 }, { yPercent: 0, duration: .9, ease: 'power2.inOut' })
+    .fromTo(lidBottom, { yPercent: 101 }, { yPercent: 0, duration: .9, ease: 'power2.inOut' }, '<')
+    .call(() => { window.scrollTo({ top: 0, behavior: 'instant' }); ScrollTrigger.update(); }, null, '+=.3')
+    .call(wake, null, '+=.4');
+
+  if (reduce) {
+    lids.style.display = 'none';
+    again.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'auto' }));
+  } else {
+    again.addEventListener('click', sleep);
+    wake();
+  }
+
+  /* ---------- photos come alive ---------- */
+  const mapPhoto = document.getElementById('mapPhoto');
+  const mapping = document.getElementById('mapping');
+  const brows = mapping.querySelectorAll('.brow');
+  const maps = mapping.querySelectorAll('.map');
+  const dots = mapping.querySelectorAll('.dot');
+  const labels = mapping.querySelectorAll('text');
+
+  if (reduce) {
+    gsap.set([brows, maps], { strokeDashoffset: 0 });
+    gsap.set(dots, { opacity: 1 });
+  } else {
+    gsap.utils.toArray('.photo').forEach(photo => {
+      // slow push-in while the photo travels through the screen (scene 10:00 has its own camera move)
+      if (photo !== mapPhoto) gsap.fromTo(photo.querySelector('img'), { scale: 1 }, { scale: 1.08, ease: 'none',
+        scrollTrigger: { trigger: photo, start: 'top bottom', end: 'bottom top', scrub: true } });
+      const glare = photo.querySelector('.glare');
+      if (glare) ScrollTrigger.create({ trigger: photo, start: 'top 70%', once: true,
+        onEnter: () => gsap.fromTo(glare, { xPercent: -110 }, { xPercent: 110, duration: 1.9, delay: .2, ease: 'power2.inOut' }) });
+
+      // the photo tilts towards the cursor or finger, with a soft light following it
+      const shine = document.createElement('span');
+      shine.className = 'shine';
+      photo.append(shine);
+      gsap.set(photo, { transformPerspective: 900 });
+      const rx = gsap.quickTo(photo, 'rotationX', { duration: .6, ease: 'power3.out' });
+      const ry = gsap.quickTo(photo, 'rotationY', { duration: .6, ease: 'power3.out' });
+      const tilt = e => {
+        const b = photo.getBoundingClientRect();
+        const px = (e.clientX - b.left) / b.width, py = (e.clientY - b.top) / b.height;
+        ry((px - .5) * 10); rx((.5 - py) * 8);
+        photo.style.setProperty('--mx', px * 100 + '%');
+        photo.style.setProperty('--my', py * 100 + '%');
+        shine.style.opacity = 1;
+      };
+      const untilt = () => { rx(0); ry(0); shine.style.opacity = 0; };
+      photo.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') tilt(e); });
+      photo.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') tilt(e); });
+      photo.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') setTimeout(untilt, 300); });
+      photo.addEventListener('pointerleave', untilt);
+      photo.addEventListener('pointercancel', untilt);
+    });
+
+    // 10:00: the camera moves in to the screen, gold brow mapping draws over the brow, then the camera moves back
+    gsap.set(dots, { scale: 0, transformOrigin: '50% 50%' });
+    const frame = document.getElementById('mapFrame');
+    const zoom = { xPercent: -139.9, yPercent: -43.75, scale: 2.4 };   // shows x 541–928, y 210–690 of the photo
+    const tl = gsap.timeline({ paused: true })
+      .to(frame, { ...zoom, transformOrigin: '0 0', duration: 1.6, ease: 'power2.inOut' })
+      .to(brows, { strokeDashoffset: 0, duration: 1.1, ease: 'power1.inOut', stagger: .15 }, '-=.2')
+      .to(maps, { strokeDashoffset: 0, duration: .6, ease: 'power1.out', stagger: .35 })
+      .to(dots, { scale: 1, opacity: 1, duration: .35, ease: 'back.out(3)', stagger: .35 }, '<+.3')
+      .to(labels, { opacity: 1, duration: .4, stagger: .35 }, '<')
+      .to(labels, { opacity: 0, duration: .5 }, '+=1.6')
+      .to(frame, { xPercent: 0, yPercent: 0, scale: 1, duration: 1.6, ease: 'power2.inOut' }, '<');
+    ScrollTrigger.create({ trigger: mapPhoto, start: 'top 40%', once: true, onEnter: () => tl.play() });
+
+    // the album: polaroids fly in from all sides and land on the table
+    const pols = album.querySelectorAll('.polaroid');
+    const albumTl = gsap.timeline({ paused: true }).from(pols, {
+      x: () => rnd(-1, 1) * innerWidth * .6, y: () => rnd(.6, 1.1) * innerHeight, rotation: () => rnd(-60, 60),
+      scale: 1.25, opacity: 0, duration: 1.15, ease: 'power3.out', stagger: .09 });
+    ScrollTrigger.create({ trigger: album, start: 'top 75%', onEnter: () => albumTl.restart(), onLeaveBack: () => albumTl.pause(0) });
+  }
+
+  window.addEventListener('load', () => ScrollTrigger.refresh());
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ScrollTrigger.refresh());
+})();
+</script>
+</body>
+</html>
