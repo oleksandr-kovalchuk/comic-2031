@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Onest:wght@400;500&family=Prata&display=swap">
 <script>document.documentElement.classList.add('js')</script>
+<!-- deferred: downloads start right away, so the eyes open sooner -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
 <style>
 /* Layout: full-screen hero quote (opened like waking eyes), then the day: a sticky clock (time + 07:00–22:00 line with the sun)
    beside a column of photos, an album of the whole day, and a full-screen night ending with shooting stars.
@@ -17,6 +20,7 @@
   --bg:#E8D3D2; --ink:#3A2630; --muted:#6B525C; --sun:#F4B79C;
   --line:color-mix(in srgb, var(--ink) 22%, transparent);
   --gold:#E8B85A;
+  --bar:62px;   /* height of the clock bar on phones */
   --f-display:"Prata",Georgia,"Times New Roman",serif;
   --f-body:"Onest","Segoe UI",system-ui,sans-serif;
   --f-hand:"Caveat","Segoe Print",cursive;
@@ -59,10 +63,15 @@ img{max-width:100%}
 
 /* the day */
 .day{position:relative;max-width:1120px;margin-inline:auto}
+/* the clock is a button: it opens the list of all moments of the day */
 .clock{display:none}
-.js .clock{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:18px;position:sticky;top:0;z-index:5;
-  margin-inline:-20px;padding:8px 20px 10px;background:var(--bg);border-bottom:1px solid var(--line)}
-.time{overflow:hidden;font:400 30px/1.4 var(--f-display);font-variant-numeric:lining-nums tabular-nums;min-width:3.1em}
+.js .clock{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;position:sticky;top:0;z-index:5;
+  width:calc(100% + 40px);height:var(--bar);margin-inline:-20px;padding:0 20px;border:0;border-bottom:1px solid var(--line);
+  background:var(--bg);color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.clock:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
+.clock-icon{display:block;width:22px;height:22px;color:var(--muted)}
+.clock-more{display:none}
+.time{display:block;overflow:hidden;font:400 30px/1.4 var(--f-display);font-variant-numeric:lining-nums tabular-nums;min-width:3.1em}
 .time span{display:inline-block}
 .dayline{position:relative;height:14px}
 .dayline::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
@@ -108,10 +117,47 @@ img{max-width:100%}
 .finale .tip{display:none;color:var(--muted);font-size:15px;margin-top:22px}
 .js .finale .tip{display:block}
 
+/* list of all moments: a sheet that slides up from the bottom */
+.moments{width:100%;max-width:560px;max-height:84svh;margin:auto auto 0;padding:0;border:0;background:transparent;color:var(--ink);overflow:visible}
+.moments::backdrop{background:rgb(20 12 16 / .45)}
+.sheet{max-height:84svh;overflow:auto;overscroll-behavior:contain;background:var(--bg);border-radius:20px 20px 0 0;
+  padding:10px 20px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 40px rgb(10 4 8 / .3)}
+.sheet::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+.sheet-head{position:sticky;top:-10px;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 0;background:var(--bg)}
+.sheet-head h2{font:400 26px/1.2 var(--f-display);margin:0}
+.close{width:40px;height:40px;border:0;border-radius:50%;background:color-mix(in srgb,var(--ink) 8%,transparent);color:inherit;font:400 24px/1 var(--f-body);cursor:pointer}
+.moment-list{list-style:none;margin:10px 0 0;padding:0}
+.moment-list button{display:grid;grid-template-columns:3.4em 1fr;gap:14px;align-items:baseline;width:100%;padding:13px 0;border:0;
+  border-top:1px solid var(--line);background:none;color:inherit;font:inherit;font-size:16px;line-height:1.35;text-align:left;cursor:pointer}
+.moment-list .t{font:400 20px/1 var(--f-display);font-variant-numeric:lining-nums tabular-nums}
+.moment-list button{position:relative}
+.moment-list [aria-current="true"]{font-weight:500}
+.moment-list [aria-current="true"]::before{content:"";position:absolute;left:-13px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--ink)}
+.moment-list button:focus-visible,.close:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* phones: every moment is one screen, one swipe moves to the next one */
+@media (max-width:959px){
+  html{scroll-snap-type:y mandatory}
+  .hero,.album-wrap,.finale{scroll-snap-align:start}
+  .scenes{gap:0;padding:0}
+  .scene{display:flex;flex-direction:column;min-height:100svh;padding:var(--bar) 0 22px;scroll-margin-top:0;scroll-snap-align:start;scroll-snap-stop:always}
+  .scene .photo{flex:1 1 0;min-height:40svh;max-height:124.2vw;margin-inline:-20px;border-radius:0}
+  .scene .photo > img,.scene .frame{position:absolute;inset:0;width:100%;height:100%}
+  .scene .photo img{height:100%;object-fit:cover;object-position:50% 75%;-webkit-touch-callout:none;user-select:none}
+  .scene .frame img{object-position:50% 50%}
+  .scene h2{margin:18px 0 8px}
+  .scene p{line-height:1.55}
+  .album-wrap{min-height:100svh;padding-top:calc(var(--bar) + 20px)}
+  .finale{display:grid;align-content:center;padding:calc(var(--bar) + 8svh) 0 10svh}
+}
+
 @media (min-width:960px){
   body{font-size:18px}
   .day{display:grid;grid-template-columns:minmax(0,1fr) 520px;column-gap:clamp(48px,7vw,104px);align-items:start}
-  .js .clock{display:block;position:sticky;top:16svh;margin:0;padding:40px 0 0;border:0;background:none}
+  .js .clock{display:block;position:sticky;top:16svh;width:auto;height:auto;margin:0;padding:40px 0 0;border:0;background:none}
+  .clock-icon{display:none}
+  .clock-more{display:inline-block;margin-top:22px;color:var(--muted);font-size:15px;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
+  .clock:hover .clock-more{color:var(--ink)}
   .time{font-size:clamp(96px,10.5vw,152px);line-height:1.15;letter-spacing:-.02em}
   .dayline{margin-top:30px;max-width:440px}
   .ends{display:flex;justify-content:space-between;max-width:440px;margin-top:10px;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
@@ -139,13 +185,15 @@ img{max-width:100%}
   </header>
 
   <section class="day" aria-label="Мій день">
-    <div class="clock" aria-hidden="true">
-      <div class="time"><span id="time">07:00</span></div>
-      <div>
-        <div class="dayline" id="dayline"><span class="sun" id="sun"></span></div>
-        <div class="ends"><span>07:00</span><span>22:00</span></div>
-      </div>
-    </div>
+    <button type="button" class="clock" id="clock" aria-haspopup="dialog" aria-controls="moments" aria-label="Усі моменти дня">
+      <span class="time"><span id="time">07:00</span></span>
+      <span>
+        <span class="dayline" id="dayline" style="display:block"><span class="sun" id="sun"></span></span>
+        <span class="ends"><span>07:00</span><span>22:00</span></span>
+        <span class="clock-more">Усі моменти дня</span>
+      </span>
+      <svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
 
     <div class="scenes">
       <article class="scene" data-time="07:00">
@@ -183,7 +231,7 @@ img{max-width:100%}
           <div class="frame" id="mapFrame">
             <img src="assets/scene-06.webp" width="928" height="1152" alt="Пояснюю ученицям архітектуру брів і колористику біля великого екрана." loading="lazy" decoding="async">
             <!-- brow mapping drawn over the brow on the screen; coordinates are in the photo's pixels -->
-            <svg class="mapping" id="mapping" viewBox="0 0 928 1152" aria-hidden="true">
+            <svg class="mapping" id="mapping" viewBox="0 0 928 1152" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
               <path class="draw brow" pathLength="1" d="M789 482 C812 446 838 384 868 372 C890 366 912 392 926 428"/>
               <path class="draw brow" pathLength="1" d="M789 482 C818 448 843 402 868 398 C889 396 910 410 926 428"/>
               <path class="draw map" pathLength="1" d="M789 600 L789 452"/>
@@ -255,10 +303,18 @@ img{max-width:100%}
 
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+<dialog class="moments" id="moments" aria-labelledby="momentsTitle">
+  <div class="sheet" id="sheet">
+    <div class="sheet-head">
+      <h2 id="momentsTitle">Мій день</h2>
+      <button type="button" class="close" id="momentsClose" aria-label="Закрити">×</button>
+    </div>
+    <ol class="moment-list" id="momentList"></ol>
+  </div>
+</dialog>
+
 <script>
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const again = document.getElementById('again');
 
@@ -422,7 +478,7 @@ img{max-width:100%}
   /* ---------- wishes: tap the night sky on the last screen ---------- */
   const wish = document.getElementById('wish');
   addEventListener('pointerdown', e => {
-    if (reduce || current !== finaleIndex || e.target.closest('button, a')) return;
+    if (reduce || current !== finaleIndex || dialog.open || e.target.closest('button, a')) return;
     addShooter(e.clientX, e.clientY);
     wakeSky();
     const x = Math.min(Math.max(e.clientX, 110), innerWidth - 110);
@@ -432,6 +488,46 @@ img{max-width:100%}
       .fromTo(wish, { opacity: 0, y: e.clientY - 20 }, { opacity: 1, y: e.clientY - 34, duration: .5, ease: 'power2.out' })
       .to(wish, { opacity: 0, y: e.clientY - 50, duration: .8, ease: 'power2.in' }, '+=1.2');
   });
+
+  /* ---------- all moments of the day: tap the clock, pick a moment ---------- */
+  const clockBtn = document.getElementById('clock');
+  const dialog = document.getElementById('moments');
+  const sheet = document.getElementById('sheet');
+  const list = document.getElementById('momentList');
+  let closing = false;
+  const closeSheet = after => {
+    if (!dialog.open || closing) return;
+    closing = true;
+    const done = () => {
+      dialog.close(); closing = false;
+      gsap.set(sheet, { clearProps: 'transform' });
+      if (after) after();
+    };
+    if (reduce) done(); else gsap.to(sheet, { yPercent: 100, duration: .28, ease: 'power2.in', onComplete: done });
+  };
+  const items = scenes.map(s => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    const title = s.querySelector('h2').textContent.replace(/^\d\d:\d\d\.\s*/, '').replace(/\.$/, '');
+    b.innerHTML = `<span class="t">${s.dataset.time}</span><span>${title}</span>`;
+    b.addEventListener('click', () => closeSheet(() => s.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })));
+    li.append(b);
+    list.append(li);
+    return b;
+  });
+  clockBtn.addEventListener('click', () => {
+    if (dialog.open) return;
+    const now = Math.max(current ?? 0, 0);
+    items.forEach((b, i) => b.setAttribute('aria-current', String(i === now)));
+    dialog.showModal();
+    items[now].focus({ preventScroll: true });
+    sheet.scrollTop = items[now].offsetTop - sheet.clientHeight / 2;
+    if (!reduce) gsap.fromTo(sheet, { yPercent: 100 }, { yPercent: 0, duration: .42, ease: 'power3.out' });
+  });
+  document.getElementById('momentsClose').addEventListener('click', () => closeSheet());
+  dialog.addEventListener('cancel', e => { e.preventDefault(); closeSheet(); });   // Esc
+  dialog.addEventListener('click', e => { if (e.target === dialog) closeSheet(); }); // tap outside the sheet
 
   /* ---------- album of the whole day ---------- */
   const album = document.getElementById('album');
@@ -458,22 +554,23 @@ img{max-width:100%}
     gsap.fromTo('.sunrise', { yPercent: 55, opacity: 0, scale: .85 }, { yPercent: 0, opacity: 1, scale: 1, duration: 2.4, ease: 'power2.out' });
     gsap.fromTo('.hero > :not(.sunrise)', { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power2.out', stagger: .15, delay: .2 });
   };
+  // about 1.2 s: a quick half-open, one blink, then the eyes open
   const wake = () => gsap.timeline({ onComplete: () => { lids.style.display = 'none'; gsap.set('.hero', { clearProps: 'filter' }); } })
     .call(() => { lids.style.display = 'block'; })
     .set([lidTop, lidBottom], { yPercent: 0 })
-    .fromTo('.hero', { filter: 'blur(10px)' }, { filter: 'blur(0px)', duration: 2.2, ease: 'power2.out' }, .3)
-    .to(lidTop, { yPercent: -36, duration: .55, ease: 'power2.out' }, .35)
-    .to(lidBottom, { yPercent: 36, duration: .55, ease: 'power2.out' }, '<')
-    .to([lidTop, lidBottom], { yPercent: 0, duration: .16, ease: 'power2.in' }, '+=.2')
-    .to(lidTop, { yPercent: -101, duration: 1.1, ease: 'power3.inOut' }, '+=.08')
-    .to(lidBottom, { yPercent: 101, duration: 1.1, ease: 'power3.inOut' }, '<')
-    .call(heroIntro, null, '<+.15');
+    .fromTo('.hero', { filter: 'blur(8px)' }, { filter: 'blur(0px)', duration: 1.2, ease: 'power2.out' }, .1)
+    .to(lidTop, { yPercent: -34, duration: .3, ease: 'power2.out' }, .1)
+    .to(lidBottom, { yPercent: 34, duration: .3, ease: 'power2.out' }, '<')
+    .to([lidTop, lidBottom], { yPercent: 0, duration: .1, ease: 'power2.in' }, '+=.08')
+    .to(lidTop, { yPercent: -101, duration: .65, ease: 'power3.inOut' }, '+=.04')
+    .to(lidBottom, { yPercent: 101, duration: .65, ease: 'power3.inOut' }, '<')
+    .call(heroIntro, null, '<+.1');
   const sleep = () => gsap.timeline()
     .call(() => { lids.style.display = 'block'; })
-    .fromTo(lidTop, { yPercent: -101 }, { yPercent: 0, duration: .9, ease: 'power2.inOut' })
-    .fromTo(lidBottom, { yPercent: 101 }, { yPercent: 0, duration: .9, ease: 'power2.inOut' }, '<')
-    .call(() => { window.scrollTo({ top: 0, behavior: 'instant' }); ScrollTrigger.update(); }, null, '+=.3')
-    .call(wake, null, '+=.4');
+    .fromTo(lidTop, { yPercent: -101 }, { yPercent: 0, duration: .6, ease: 'power2.inOut' })
+    .fromTo(lidBottom, { yPercent: 101 }, { yPercent: 0, duration: .6, ease: 'power2.inOut' }, '<')
+    .call(() => { window.scrollTo({ top: 0, behavior: 'instant' }); ScrollTrigger.update(); }, null, '+=.15')
+    .call(wake, null, '+=.25');
 
   if (reduce) {
     lids.style.display = 'none';
@@ -518,10 +615,21 @@ img{max-width:100%}
         photo.style.setProperty('--my', py * 100 + '%');
         shine.style.opacity = 1;
       };
-      const untilt = () => { rx(0); ry(0); shine.style.opacity = 0; };
-      photo.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') tilt(e); });
-      photo.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') tilt(e); });
-      photo.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') setTimeout(untilt, 300); });
+      // on touch screens the photo tilts only after a long press, so scrolling past it never makes it twitch
+      let press = 0, held = false, sx = 0, sy = 0;
+      const untilt = () => { clearTimeout(press); held = false; rx(0); ry(0); shine.style.opacity = 0; };
+      photo.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'mouse') return;
+        sx = e.clientX; sy = e.clientY;
+        clearTimeout(press);
+        press = setTimeout(() => { held = true; tilt(e); }, 350);
+      });
+      photo.addEventListener('pointermove', e => {
+        if (e.pointerType === 'mouse') { tilt(e); return; }
+        if (held) tilt(e);
+        else if (Math.hypot(e.clientX - sx, e.clientY - sy) > 8) clearTimeout(press);
+      });
+      photo.addEventListener('pointerup', untilt);
       photo.addEventListener('pointerleave', untilt);
       photo.addEventListener('pointercancel', untilt);
     });
@@ -529,16 +637,29 @@ img{max-width:100%}
     // 10:00: the camera moves in to the screen, gold brow mapping draws over the brow, then the camera moves back
     gsap.set(dots, { scale: 0, transformOrigin: '50% 50%' });
     const frame = document.getElementById('mapFrame');
-    const zoom = { xPercent: -139.9, yPercent: -43.75, scale: 2.4 };   // shows x 541–928, y 210–690 of the photo
-    const tl = gsap.timeline({ paused: true })
-      .to(frame, { ...zoom, transformOrigin: '0 0', duration: 1.6, ease: 'power2.inOut' })
+    // The part of the photo to zoom into (photo pixels). On phones the photo can be cropped (object-fit: cover),
+    // so the camera move is measured from the frame's real size when it starts.
+    // x 541–928 fills the width; vertically the brow and the mapping lines (y ≈ 340–610) must stay in view
+    const REGION = { x: 541, w: 387, cy: 475, minH: 280 };
+    const zoomTo = () => {
+      const w = frame.offsetWidth, h = frame.offsetHeight;
+      const s = Math.max(w / 928, h / 1152);
+      const ox = (w - 928 * s) / 2, oy = (h - 1152 * s) / 2;
+      const z = Math.min(w / (REGION.w * s), h / (REGION.minH * s));
+      const cx = ox + (REGION.x + REGION.w / 2) * s, cy = oy + REGION.cy * s;
+      const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);   // never show past the edge of the photo
+      return { x: clamp(w / 2 - z * cx, w - z * (ox + 928 * s), -z * ox),
+               y: clamp(h / 2 - z * cy, h - z * (oy + 1152 * s), -z * oy), scale: z };
+    };
+    const playMapping = () => gsap.timeline()
+      .to(frame, { ...zoomTo(), transformOrigin: '0 0', duration: 1.6, ease: 'power2.inOut' })
       .to(brows, { strokeDashoffset: 0, duration: 1.1, ease: 'power1.inOut', stagger: .15 }, '-=.2')
       .to(maps, { strokeDashoffset: 0, duration: .6, ease: 'power1.out', stagger: .35 })
       .to(dots, { scale: 1, opacity: 1, duration: .35, ease: 'back.out(3)', stagger: .35 }, '<+.3')
       .to(labels, { opacity: 1, duration: .4, stagger: .35 }, '<')
       .to(labels, { opacity: 0, duration: .5 }, '+=1.6')
-      .to(frame, { xPercent: 0, yPercent: 0, scale: 1, duration: 1.6, ease: 'power2.inOut' }, '<');
-    ScrollTrigger.create({ trigger: mapPhoto, start: 'top 40%', once: true, onEnter: () => tl.play() });
+      .to(frame, { x: 0, y: 0, scale: 1, duration: 1.6, ease: 'power2.inOut' }, '<');
+    ScrollTrigger.create({ trigger: mapPhoto, start: 'top 40%', once: true, onEnter: playMapping });
 
     // the album: polaroids fly in from all sides and land on the table
     const pols = album.querySelectorAll('.polaroid');
@@ -550,7 +671,7 @@ img{max-width:100%}
 
   window.addEventListener('load', () => ScrollTrigger.refresh());
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ScrollTrigger.refresh());
-})();
+});
 </script>
 </body>
 </html>
